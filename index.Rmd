@@ -36,6 +36,7 @@ unq_lp_tracks$year_album_published =
 
 ggplot(unq_lp_tracks, aes(x=year_album_published, y=track.popularity)) +
   labs(title="Linkin Park track popularity over time", x="Year", y="Popularity", color = "Album") +
+  lims(y=c(0, 100)) +
   geom_point(aes(color=track.album.name)) + 
   geom_smooth()
 ```
@@ -48,6 +49,7 @@ main_albums <- c("Hybrid Theory (Bonus Edition)","Meteora (Bonus Edition)", "Min
 main_album_tracks <- unq_lp_tracks %>% filter(track.album.name %in% main_albums)
 ggplot(main_album_tracks, aes(x=year_album_published, y=track.popularity)) +
   labs(title="Linkin Park track popularity over time", x="Year", y="Popularity", color = "Album") +
+  lims(y=c(0, 100)) +
   geom_point(aes(color=track.album.name)) + 
   geom_smooth()
 ```
