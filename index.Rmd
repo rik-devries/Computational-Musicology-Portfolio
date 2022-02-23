@@ -2,15 +2,19 @@
 title: "Portfolio"
 author: "Rik de Vries"
 date: "2/19/2022"
-output: html_document
+output: 
+  flexdashboard::flex_dashboard:
+    storyboard: true
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(spotifyr)
 library(tidyverse)
+library(plotly)
+library(flexdashboard)
 ```
-## Corpus selection
+### Corpus selection
 For my corpus, I was thinking of selecting different albums from Linkin Park on Spotify. I feel like this would make a very interesting corpus as the band has made a lot of very large changes over the years. Their early albums were very raw, producing a lot of music in the nu metal genre. The type of music they put out later on was much softer, which is something critics and some types of fans did not always like. I would like to identify the differences between these early and late albums.
 
 If possible, I'd also like to compare the band's music to some of the band's side projects as well, like Chester Bennington's Grey Daze and Dead By Sunrise bands and Mike Shinoda's Fort Minor songs along with his new solo career that he started after Chester committed suicide.
@@ -19,10 +23,8 @@ A special album that I am very interested in is the Reanimation album. This is o
 
 I feel like comparing all these songs would give a decent picture of how the band and its members changed over time. There are some limitations to this corpus, as the band used to have a different lead singer, Mark Wakefield, but they never released an official album back then. Next to that, the group has released many "Underground" albums, which are not on Spotify. These would have been very interesting to include in the corpus as well, to see if there are visible differences between the officially released albums and the albums that did not receive the same type of polishing.
 
-## Album popularity
-The following plot shows the popularity of newly released tracks of the band Linkin Park.
-
-```{r pop_plot, fig.height = 6, fig.width = 10, fig.align = "center", echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+### Album popularity
+```{r pop_plot2, fig.height = 6, fig.width = 10, fig.align = "center", echo=FALSE}
 all_lp_tracks <- get_playlist_audio_features("", "1y9QYGfYFzSO7EF53wwLiB")
 # Filter out songs that have been duplicated
 # (republished under the 20th anniversary album), along with inbetween-tracks
@@ -34,25 +36,24 @@ unq_lp_tracks$year_album_published =
   as.Date(format(as.Date(unq_lp_tracks$track.album.release_date, 
                          format="%Y-%m-%d"),"%Y"), "%Y")
 
-ggplot(unq_lp_tracks, aes(x=year_album_published, y=track.popularity)) +
+main_albums <- c("Hybrid Theory (Bonus Edition)","Meteora (Bonus Edition)", "Minutes to Midnight",  "A Thousand Suns", "LIVING THINGS","The Hunting Party", "One More Light")
+main_album_tracks <- unq_lp_tracks %>% filter(track.album.name %in% main_albums)
+main_albums_plot <- ggplot(main_album_tracks, aes(x=year_album_published, y=track.popularity, text=sprintf("Track: %s<br>Album: %s<br>Popularity: %s", track.name, track.album.name, track.popularity))) +
   labs(title="Linkin Park track popularity over time", x="Year", y="Popularity", color = "Album") +
   lims(y=c(0, 100)) +
   geom_point(aes(color=track.album.name)) + 
   geom_smooth()
+
+ggplotly(main_albums_plot, tooltip=c("text"))
+#main_albums_plot
 ```
+
+***
+The following plot shows the popularity of newly released tracks of the band Linkin Park.
 
 The overall trend is definitely downward sloping. Overtime the albums became less and less popular, it seems. This data, however, is heavily influenced by albums that don't contain any regular, polished songs. There are remix albums included, along with songs released after Chester Bennington's death. These are mostly recordings that were still available but that didn't make the cut earlier.
 If we include only the main albums, the graph looks as follows:
 
-```{r pop_plot2, fig.height = 6, fig.width = 10, fig.align = "center", echo=FALSE, results='hide', message=FALSE, warning=FALSE}
-main_albums <- c("Hybrid Theory (Bonus Edition)","Meteora (Bonus Edition)", "Minutes to Midnight",  "A Thousand Suns", "LIVING THINGS","The Hunting Party", "One More Light")
-main_album_tracks <- unq_lp_tracks %>% filter(track.album.name %in% main_albums)
-ggplot(main_album_tracks, aes(x=year_album_published, y=track.popularity)) +
-  labs(title="Linkin Park track popularity over time", x="Year", y="Popularity", color = "Album") +
-  lims(y=c(0, 100)) +
-  geom_point(aes(color=track.album.name)) + 
-  geom_smooth()
-```
 This plot shows a very different story. It still displays that there was definitely a downward sloping trend at first, but it seems to be picking up after its all-time low in 2010. 
 In the coming weeks, I'd like to compare this plot to the professional ratings of Linkin Parks's albums, along with differences in the music style. 
 <!---
