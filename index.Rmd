@@ -13,6 +13,7 @@ library(spotifyr)
 library(tidyverse)
 library(plotly)
 library(flexdashboard)
+all_lp_tracks <- get_playlist_audio_features("", "1y9QYGfYFzSO7EF53wwLiB")
 ```
 ### Corpus selection
 For my corpus, I was thinking of selecting different albums from Linkin Park on Spotify. I feel like this would make a very interesting corpus as the band has made a lot of very large changes over the years. Their early albums were very raw, producing a lot of music in the nu metal genre. The type of music they put out later on was much softer, which is something critics and some types of fans did not always like. I would like to identify the differences between these early and late albums.
@@ -25,7 +26,6 @@ I feel like comparing all these songs would give a decent picture of how the ban
 
 ### Album popularity
 ```{r pop_plot2, fig.height = 6, fig.width = 10, fig.align = "center", echo=FALSE}
-all_lp_tracks <- get_playlist_audio_features("", "1y9QYGfYFzSO7EF53wwLiB")
 # Filter out songs that have been duplicated
 # (republished under the 20th anniversary album), along with inbetween-tracks
 # that are shorter than a minute as these are not songs.
@@ -38,24 +38,25 @@ unq_lp_tracks$year_album_published =
 
 main_albums <- c("Hybrid Theory (Bonus Edition)","Meteora (Bonus Edition)", "Minutes to Midnight",  "A Thousand Suns", "LIVING THINGS","The Hunting Party", "One More Light")
 main_album_tracks <- unq_lp_tracks %>% filter(track.album.name %in% main_albums)
-main_albums_plot <- ggplot(main_album_tracks, aes(x=year_album_published, y=track.popularity, text=sprintf("Track: %s<br>Album: %s<br>Popularity: %s", track.name, track.album.name, track.popularity))) +
+main_albums_plot <- ggplot(main_album_tracks, aes(x=year_album_published, y=track.popularity)) +
   labs(title="Linkin Park track popularity over time", x="Year", y="Popularity", color = "Album") +
   lims(y=c(0, 100)) +
-  geom_point(aes(color=track.album.name)) + 
-  geom_smooth()
+  geom_point(aes(color=track.album.name, text=sprintf("Track: %s<br>Album: %s<br>Popularity: %s", track.name, track.album.name, track.popularity))) + 
+  geom_smooth(aes(text=""))
+#"Year: %s<br>Popularity: %s", year_album_published, track.popularity
+w <- ggplotly(main_albums_plot, tooltip=c("text"))
 
-ggplotly(main_albums_plot, tooltip=c("text"))
-#main_albums_plot
+# Disable hover for geom_smooth (trace 9) (Lower trace indices are for albums)
+w %>%
+  style(hoverinfo = "none", traces = 9)
 ```
 
 ***
-The following plot shows the popularity of newly released tracks of the band Linkin Park.
+The following plot shows the popularity of tracks from the main albums of the band Linkin Park. 
+Data points on the chart can be hovered to get specific information (track name, the album it belongs to and its popularity).
 
-The overall trend is definitely downward sloping. Overtime the albums became less and less popular, it seems. This data, however, is heavily influenced by albums that don't contain any regular, polished songs. There are remix albums included, along with songs released after Chester Bennington's death. These are mostly recordings that were still available but that didn't make the cut earlier.
-If we include only the main albums, the graph looks as follows:
-
-This plot shows a very different story. It still displays that there was definitely a downward sloping trend at first, but it seems to be picking up after its all-time low in 2010. 
-In the coming weeks, I'd like to compare this plot to the professional ratings of Linkin Parks's albums, along with differences in the music style. 
+To give a clear image of the band's popularity, the plot only relies on tracks from main albums. It therefore excludes remix albums and albums made after Chester Bennington's death.
+The plot shows a trend that starts off downward sloping, with an all-time low in 2010. After this lowpoint though, it climbs back up to early 2000-levels. 
 <!---
 Comparisons with reviewers, 
 Style of albums (loudness, dancability, ...)
