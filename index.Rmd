@@ -82,7 +82,8 @@ plot_oml <- one_more_light %>%
       x = start + duration / 2,
       width = duration,
       y = pitch_class,
-      fill = value
+      fill = value,
+      text = sprintf("Time: %.0f seconds<br>Pitch class: %s<br>Magnitude: %s", start + duration / 2, pitch_class, value)
     )
   ) +
   geom_tile() +
@@ -97,7 +98,8 @@ plot_ite <- in_the_end %>%
       x = start + duration / 2,
       width = duration,
       y = pitch_class,
-      fill = value
+      fill = value,
+      text = sprintf("Time: %.0f seconds<br>Pitch class: %s<br>Magnitude: %s", start + duration / 2, pitch_class, value)
       )
   ) +
   geom_tile() +
@@ -105,12 +107,11 @@ plot_ite <- in_the_end %>%
   theme_minimal() +
   scale_fill_viridis_c()
 
-w <- subplot(plot_ite, plot_oml)
-
-text_1 <-  paste0("Text geom_point:", "<br />", "X1=", w$x$data[[1]]$x, "<br />", "X2=", w$x$data[[1]]$y)
-text_2 <-  paste0("Text geom_smooth:", "<br />" , w$x$data[[2]]$text)
-w %>% 
-    style(text="abcs") 
+plt1 <- ggplotly(plot_ite, tooltip="text")
+plt2 <- ggplotly(plot_oml, tooltip="text")
+w <- subplot(plt1, plt2)
+w %>%
+  layout(title = 'In the End vs One More Light')
 
 #w %>%
 #  
