@@ -13,9 +13,10 @@ library(spotifyr)
 library(tidyverse)
 library(plotly)
 library(flexdashboard)
+library(compmus)
 all_lp_tracks <- get_playlist_audio_features("", "1y9QYGfYFzSO7EF53wwLiB")
 ```
-### Corpus selection
+### Linkin Park's albums over time as the corpus selection
 For my corpus, I was thinking of selecting different albums from Linkin Park on Spotify. I feel like this would make a very interesting corpus as the band has made a lot of very large changes over the years. Their early albums were very raw, producing a lot of music in the nu metal genre. The type of music they put out later on was much softer, which is something critics and some types of fans did not always like. I would like to identify the differences between these early and late albums.
 
 If possible, I'd also like to compare the band's music to some of the band's side projects as well, like Chester Bennington's Grey Daze and Dead By Sunrise bands and Mike Shinoda's Fort Minor songs along with his new solo career that he started after Chester committed suicide.
@@ -24,7 +25,7 @@ A special album that I am very interested in is the Reanimation album. This is o
 
 I feel like comparing all these songs would give a decent picture of how the band and its members changed over time. There are some limitations to this corpus, as the band used to have a different lead singer, Mark Wakefield, but they never released an official album back then. Next to that, the group has released many "Underground" albums, which are not on Spotify. These would have been very interesting to include in the corpus as well, to see if there are visible differences between the officially released albums and the albums that did not receive the same type of polishing.
 
-### Album popularity
+### Album popularity dips but picks up to original heights
 ```{r pop_plot2, fig.height = 6, fig.width = 10, fig.align = "center", echo=FALSE}
 # Filter out songs that have been duplicated
 # (republished under the 20th anniversary album), along with inbetween-tracks
@@ -57,6 +58,76 @@ Data points on the chart can be hovered to get specific information (track name,
 
 To give a clear image of the band's popularity, the plot only relies on tracks from main albums. It therefore excludes remix albums and albums made after Chester Bennington's death.
 The plot shows a trend that starts off downward sloping, with an all-time low in 2010. After this lowpoint though, it climbs back up to early 2000-levels. 
+
+### Tracks get more well-defined pitch classes over time 
+```{r echo=FALSE}
+one_more_light <-
+  get_tidy_audio_analysis("3xXBsjrbG1xQIm1xv1cKOt") %>%
+  select(segments) %>%
+  unnest(segments) %>%
+  select(start, duration, pitches)
+in_the_end <-
+  get_tidy_audio_analysis("60a0Rd6pjrkxjPbaKzXjfq") %>%
+  select(segments) %>%
+  unnest(segments) %>%
+  select(start, duration, pitches)
+```
+
+```{r fig.height = 6, fig.width = 10, fig.align = "center", echo=FALSE}
+plot_oml <- one_more_light %>%
+  mutate(pitches = map(pitches, compmus_normalise, "chebyshev")) %>%
+  compmus_gather_chroma() %>% 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+    )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+plot_ite <- in_the_end %>%
+  mutate(pitches = map(pitches, compmus_normalise, "chebyshev")) %>%
+  compmus_gather_chroma() %>% 
+  ggplot(
+    aes(
+      x = start + duration / 2,
+      width = duration,
+      y = pitch_class,
+      fill = value
+      )
+  ) +
+  geom_tile() +
+  labs(x = "Time (s)", y = NULL, fill = "Magnitude") +
+  theme_minimal() +
+  scale_fill_viridis_c()
+
+w <- subplot(plot_ite, plot_oml)
+
+text_1 <-  paste0("Text geom_point:", "<br />", "X1=", w$x$data[[1]]$x, "<br />", "X2=", w$x$data[[1]]$y)
+text_2 <-  paste0("Text geom_smooth:", "<br />" , w$x$data[[2]]$text)
+w %>% 
+    style(text="abcs") 
+
+#w %>%
+#  
+#  #style(hoverinfo = "none") %>%
+#  layout(annotations = list(
+# list(x = 0.17 , y = 1.065, text = "In the End", showarrow = F, xref='paper', yref='paper'),
+#  list(x = 0.87 , y = 1.065, text = "One More Light", showarrow = F, xref='paper', yref='paper'))
+#)
+
+```
+***
+This plot shows the chromagrams from two of Linkin Park's most popular songs, one from their first album and one from their last album. The song on the left is *In the End*, and the song on the right is *One More Light*. 
+
+The first song changes a lot over the course of its duration. It has many instruments: piano, guitar, drums, electric instruments and there seems to be some electric crackling noises added too. On top of all of that, it has both Chester Bennington singing loudly, mixed with Mike Shinoda rapping. This leads to a very mixed chromagram where, even though the main notes are clearly visible, there is a lot of spread to other notes. 
+
+One More Light takes a very different approach. It has very well-defined chroma's with barely any spread to other pitch classes. From the chromagram it can be seen that Chester sings on-key very well. The song is much more emotional, and less rock-like than *In the End*. It does not nearly contain as many instruments, or as much diversity. This displays a large difference between the two songs and their respective albums.
+
 <!---
 Comparisons with reviewers, 
 Style of albums (loudness, dancability, ...)
