@@ -18,6 +18,135 @@ library(flexdashboard)
 library(compmus)
 all_lp_tracks <- get_playlist_audio_features("", "1y9QYGfYFzSO7EF53wwLiB")
 ```
+### Older and newer songs have similar structures, but very different execution
+```{r echo=FALSE}
+# In the end 60a0Rd6pjrkxjPbaKzXjfq
+# One more light 3xXBsjrbG1xQIm1xv1cKOt
+ite_plot <-
+  get_tidy_audio_analysis("60a0Rd6pjrkxjPbaKzXjfq") %>%
+  compmus_align(bars, segments) %>%
+  select(bars) %>%
+  unnest(bars) %>%
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "acentre", norm = "manhattan"
+      )
+  ) %>%
+  mutate(
+    timbre =
+      map(segments,
+        compmus_summarise, timbre,
+        method = "mean"
+      )
+  )
+mix_plot_1 <-bind_rows(
+  ite_plot %>%
+    compmus_self_similarity(pitches, "aitchison") %>%
+    mutate(d = d / max(d), type = "Chroma"),
+  ite_plot %>%
+    compmus_self_similarity(timbre, "euclidean") %>%
+    mutate(d = d / max(d), type = "Timbre")
+) %>%
+  mutate() %>%
+  ggplot(
+    aes(
+      x = xstart + xduration / 2,
+      width = xduration,
+      y = ystart + yduration / 2,
+      height = yduration,
+      fill = d
+    )
+  ) +
+  geom_tile() +
+  coord_fixed() +
+  facet_wrap(~type) +
+  scale_fill_viridis_c(guide = "none") +
+  theme_classic() +
+  labs(x = "", y = "")
+
+oml_plot <-
+  get_tidy_audio_analysis("3xXBsjrbG1xQIm1xv1cKOt") %>%
+  compmus_align(bars, segments) %>%
+  select(bars) %>%
+  unnest(bars) %>%
+  mutate(
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "acentre", norm = "manhattan"
+      )
+  ) %>%
+  mutate(
+    timbre =
+      map(segments,
+        compmus_summarise, timbre,
+        method = "mean"
+      )
+  )
+mix_plot_2 <- bind_rows(
+  oml_plot %>%
+    compmus_self_similarity(pitches, "aitchison") %>%
+    mutate(d = d / max(d), type = "Chroma"),
+  oml_plot %>%
+    compmus_self_similarity(timbre, "euclidean") %>%
+    mutate(d = d / max(d), type = "Timbre")
+) %>%
+  mutate() %>%
+  ggplot(
+    aes(
+      x = xstart + xduration / 2,
+      width = xduration,
+      y = ystart + yduration / 2,
+      height = yduration,
+      fill = d
+    )
+  ) +
+  geom_tile() +
+  coord_fixed() +
+  facet_wrap(~type) +
+  scale_fill_viridis_c(guide = "none") +
+  theme_classic() +
+  labs(x = "", y = "")
+
+subplot(mix_plot_1, mix_plot_2, nrows = 2, margin = 0.08) %>%
+  layout(annotations = list( 
+    list(
+      x = 0.1,
+      y = 1,
+      text = "In the End",  
+      xref = "paper",  
+      yref = "paper",  
+      xanchor = "center",  
+      yanchor = "bottom",  
+      showarrow = FALSE 
+    ),  
+    list( 
+      x = 0.1,  
+      y = 0.42,
+      text = "One More Light",  
+      xref = "paper",  
+      yref = "paper",  
+      xanchor = "center",  
+      yanchor = "bottom",  
+      showarrow = FALSE 
+  )))
+#ggplotly(mix_plot_1)
+#ggplotly(mix_plot_2)
+
+```
+
+***
+This plot shows the self-similarity matrices of *In the End* and *One More Light*, and it tells us an important difference between old and new songs. As could be seen in the chromagrams on the previous tab, *In the End* starts off with a D#, F, F# and A#. These are almost nowhere to be seen in the rest of the song, so it is only similar to itself. The song then goes on to play some different notes that persist for almost the whole song, with C# being the most pronounced. 
+The timbre self-similarity matrix tells an equally interesting story. The instrumentals in the beginning are definitely unique. That is because they are mixed in with electric/static noises. If they would not have been, they would have been similar to the instrumentals in the outro. The matrix shows the layout of the song very well. At around 20 seconds, Mike Shinoda starts rapping. This is something he also does at around 80 seconds, which is why the self-similarity matrix shows a connection between these two time points. Chester Bennington sings the chrous three times, with the third time being led by a bridge. The three areas are very visible in the matrix. Half of the bridge is sung in a calm way that is unique to any other moment in the song. The other half of the bridge sounds a lot like the chorus, which is why the square that starts at 150 seconds is so much larger than the other two.
+
+*One More Light* is sung in a very different way. A lot of the song is sung in the G# key, as can be seen in the chromagram on the previous tab. This is mixed in with a bit of the F key and some of the C# chroma.
+The repetition of these three chromas (mainly the G# key) makes for the pattern we see in the self-similarity matrix. The dark square we see at 70 seconds is the first repetition of the chorus. The chromagram does not clearly show when the chorus repeats though, for this we need to look at the timbre matrix. This clearly shows the chorus is song again at around 150 seconds and then a final time at 210 seconds.
+At around 3 minutes in we see a dark blue square that is not similar to anything in the song, except a bit to the intro. This is a relaxed instrumental bridge. It is similar to the intro because the this also only contained instrumental music. The two yellow lines visible at 125 and 135 seconds are long pauses between two sentences, where there is almost no sound at all. These are not similar to any other points in the song.
+
+So while both *In the End* and *One More Light* clearly show verses and choruses being similar, the chromagram shows that *One More Light* alternates a lot more between chromas than *In the End*, which looks like a much more linear song. The timbre matrices show that both songs have unique points next to repetition. In *One More Light* these are slow instrumental pieces, or moments of complete silence. In *In the End* this was a bridge where there was a moment of less intense singing, which then transitioned into the last repetition of the chorus.
+
 ### Linkin Park's albums over time as the corpus selection
 <center>
 <h1>Linkin Park: Old vs New</h1>
@@ -149,134 +278,7 @@ The first song changes a lot over the course of its duration. It has many instru
 
 One More Light takes a very different approach. It has very well-defined chroma's with barely any spread to other pitch classes. From the chromagram it can be seen that Chester sings on-key very well. The song is much more emotional, and less rock-like than *In the End*. It does not nearly contain as many instruments, or as much diversity. This displays a large difference between the two songs and their respective albums.
 
-### Older and newer songs have similar structures, but very different execution
-```{r echo=FALSE}
-# In the end 60a0Rd6pjrkxjPbaKzXjfq
-# One more light 3xXBsjrbG1xQIm1xv1cKOt
-ite_plot <-
-  get_tidy_audio_analysis("60a0Rd6pjrkxjPbaKzXjfq") %>%
-  compmus_align(bars, segments) %>%
-  select(bars) %>%
-  unnest(bars) %>%
-  mutate(
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "acentre", norm = "manhattan"
-      )
-  ) %>%
-  mutate(
-    timbre =
-      map(segments,
-        compmus_summarise, timbre,
-        method = "mean"
-      )
-  )
-mix_plot_1 <-bind_rows(
-  ite_plot %>%
-    compmus_self_similarity(pitches, "aitchison") %>%
-    mutate(d = d / max(d), type = "Chroma"),
-  ite_plot %>%
-    compmus_self_similarity(timbre, "euclidean") %>%
-    mutate(d = d / max(d), type = "Timbre")
-) %>%
-  mutate() %>%
-  ggplot(
-    aes(
-      x = xstart + xduration / 2,
-      width = xduration,
-      y = ystart + yduration / 2,
-      height = yduration,
-      fill = d
-    )
-  ) +
-  geom_tile() +
-  coord_fixed() +
-  facet_wrap(~type) +
-  scale_fill_viridis_c(guide = "none") +
-  theme_classic() +
-  labs(x = "", y = "")
 
-oml_plot <-
-  get_tidy_audio_analysis("3xXBsjrbG1xQIm1xv1cKOt") %>%
-  compmus_align(bars, segments) %>%
-  select(bars) %>%
-  unnest(bars) %>%
-  mutate(
-    pitches =
-      map(segments,
-        compmus_summarise, pitches,
-        method = "acentre", norm = "manhattan"
-      )
-  ) %>%
-  mutate(
-    timbre =
-      map(segments,
-        compmus_summarise, timbre,
-        method = "mean"
-      )
-  )
-mix_plot_2 <- bind_rows(
-  oml_plot %>%
-    compmus_self_similarity(pitches, "aitchison") %>%
-    mutate(d = d / max(d), type = "Chroma"),
-  oml_plot %>%
-    compmus_self_similarity(timbre, "euclidean") %>%
-    mutate(d = d / max(d), type = "Timbre")
-) %>%
-  mutate() %>%
-  ggplot(
-    aes(
-      x = xstart + xduration / 2,
-      width = xduration,
-      y = ystart + yduration / 2,
-      height = yduration,
-      fill = d
-    )
-  ) +
-  geom_tile() +
-  coord_fixed() +
-  facet_wrap(~type) +
-  scale_fill_viridis_c(guide = "none") +
-  theme_classic() +
-  labs(x = "", y = "")
-
-subplot(mix_plot_1, mix_plot_2, nrows = 2, margin = 0.08) %>%
-  layout(annotations = list( 
-    list(
-      x = 0.1,
-      y = 1,
-      text = "In the End",  
-      xref = "paper",  
-      yref = "paper",  
-      xanchor = "center",  
-      yanchor = "bottom",  
-      showarrow = FALSE 
-    ),  
-    list( 
-      x = 0.1,  
-      y = 0.42,
-      text = "One More Light",  
-      xref = "paper",  
-      yref = "paper",  
-      xanchor = "center",  
-      yanchor = "bottom",  
-      showarrow = FALSE 
-  )))
-#ggplotly(mix_plot_1)
-#ggplotly(mix_plot_2)
-
-```
-
-***
-This plot shows the self-similarity matrices of *In the End* and *One More Light*, and it tells us an important difference between old and new songs. As could be seen in the chromagrams on the previous tab, *In the End* starts off with a D#, F, F# and A#. These are almost nowhere to be seen in the rest of the song, so it is only similar to itself. The song then goes on to play some different notes that persist for almost the whole song, with C# being the most pronounced. 
-The timbre self-similarity matrix tells an equally interesting story. The instrumentals in the beginning are definitely unique. That is because they are mixed in with electric/static noises. If they would not have been, they would have been similar to the instrumentals in the outro. The matrix shows the layout of the song very well. At around 20 seconds, Mike Shinoda starts rapping. This is something he also does at around 80 seconds, which is why the self-similarity matrix shows a connection between these two time points. Chester Bennington sings the chrous three times, with the third time being led by a bridge. The three areas are very visible in the matrix. Half of the bridge is sung in a calm way that is unique to any other moment in the song. The other half of the bridge sounds a lot like the chorus, which is why the square that starts at 150 seconds is so much larger than the other two.
-
-*One More Light* is sung in a very different way. A lot of the song is sung in the G# key, as can be seen in the chromagram on the previous tab. This is mixed in with a bit of the F key and some of the C# chroma.
-The repetition of these three chromas (mainly the G# key) makes for the pattern we see in the self-similarity matrix. The dark square we see at 70 seconds is the first repetition of the chorus. The chromagram does not clearly show when the chorus repeats though, for this we need to look at the timbre matrix. This clearly shows the chorus is song again at around 150 seconds and then a final time at 210 seconds.
-At around 3 minutes in we see a dark blue square that is not similar to anything in the song, except a bit to the intro. This is a relaxed instrumental bridge. It is similar to the intro because the this also only contained instrumental music. The two yellow lines visible at 125 and 135 seconds are long pauses between two sentences, where there is almost no sound at all. These are not similar to any other points in the song.
-
-So while both *In the End* and *One More Light* clearly show verses and choruses being similar, the chromagram shows that *One More Light* alternates a lot more between chromas than *In the End*, which looks like a much more linear song. The timbre matrices show that both songs have unique points next to repetition. In *One More Light* these are slow instrumental pieces, or moments of complete silence. In *In the End* this was a bridge where there was a moment of less intense singing, which then transitioned into the last repetition of the chorus.
 <!---
 Comparisons with reviewers, 
 Style of albums (loudness, dancability, ...)
