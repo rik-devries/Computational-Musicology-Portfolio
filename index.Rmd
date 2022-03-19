@@ -38,13 +38,9 @@ all_lp_tracks <- get_playlist_audio_features("", "1y9QYGfYFzSO7EF53wwLiB")
 ***
 <iframe src="https://open.spotify.com/embed/playlist/7MATpbz5p1afYISxOgY7ek?utm_source=generator" width="100%" height="380" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
 
-For my corpus, I was thinking of selecting different albums from Linkin Park on Spotify. I feel like this would make a very interesting corpus as the band has made a lot of very large changes over the years. Their early albums were very raw, producing a lot of music in the nu metal genre. The type of music they put out later on was much softer, which is something critics and some types of fans did not always like. I would like to identify the differences between these early and late albums.
+In this report, we will take a closer look at different albums from Linkin Park on Spotify. These albums are interesting to look at as the band has made a lot of changes over the years. Their early albums were very raw, as they produced a lot of music that defined the nu metal genre. The style in which they produced music has changed a lot over time. Their last album, *One More Light* has been categorized into the Pop and Indie genres. In this deeper dive we will take a lot at what defined earlier albums, and what exactly changed over time.
 
-If possible, I'd also like to compare the band's music to some of the band's side projects as well, like Chester Bennington's Grey Daze and Dead By Sunrise bands and Mike Shinoda's Fort Minor songs along with his new solo career that he started after Chester committed suicide.
-
-A special album that I am very interested in is the Reanimation album. This is one of the top 5 best-selling remix albums, even to this day. Of course, as this only contains remixes, there should be a lot of visible differences to the rest of the band's work.
-
-I feel like comparing all these songs would give a decent picture of how the band and its members changed over time. There are some limitations to this corpus, as the band used to have a different lead singer, Mark Wakefield, but they never released an official album back then. Next to that, the group has released many "Underground" albums, which are not on Spotify. These would have been very interesting to include in the corpus as well, to see if there are visible differences between the officially released albums and the albums that did not receive the same type of polishing.
+Comparing all these songs should give a decent picture of how the band and its members changed over time. There are some limitations to this corpus, as the band used to have a different lead singer, Mark Wakefield, but they never released an official album back then. Next to that, the group has released many "Underground" albums, which are not on Spotify. These would have been very interesting to include in the corpus as well, to see if there are visible differences between the officially released albums and the albums that did not receive the same type of polishing.
 
 ### Album popularity dips but picks up to original heights
 ```{r pop_plot2, fig.height = 6, fig.width = 10, fig.align = "center", echo=FALSE}
@@ -79,6 +75,8 @@ Data points on the chart can be hovered to get specific information (track name,
 
 To give a clear image of the band's popularity, the plot only relies on tracks from main albums. It therefore excludes remix albums and albums made after Chester Bennington's death.
 The plot shows a trend that starts off downward sloping, with an all-time low in 2010. After this lowpoint though, it climbs back up to early 2000-levels. 
+
+It does therefore seem that in either style, the band manages to attract large amounts of listeners. It looks like it did take a while for the fans to get used to the new style though, with some in-between albums not performing as well.
 
 ### Tracks get more well-defined pitch classes over time 
 ```{r echo=FALSE}
@@ -148,9 +146,12 @@ This plot shows the chromagrams from two of Linkin Park's most popular songs, on
 
 The first song changes a lot over the course of its duration. It has many instruments: piano, guitar, drums, electric instruments and there seems to be some electric crackling noises added too. On top of all of that, it has both Chester Bennington singing loudly, mixed with Mike Shinoda rapping. This leads to a very mixed chromagram where, even though the main notes are clearly visible, there is a lot of spread to other notes. 
 
-One More Light takes a very different approach. It has very well-defined chroma's with barely any spread to other pitch classes. From the chromagram it can be seen that Chester sings on-key very well. The song is much more emotional, and less rock-like than *In the End*. It does not nearly contain as many instruments, or as much diversity. This displays a large difference between the two songs and their respective albums.
+One More Light takes a very different approach. It has very well-defined chroma's with barely any spread to other pitch classes. The song is much more emotional, and less rock-like than *In the End*. It does not nearly contain as many instruments, or as much diversity. This displays a large difference between the two songs and their respective albums.
 
-### Older and newer songs have similar structures, but very different execution
+The chromagram show some sections of the song very well. *In the End* clearly shows an intro up until 20 seconds, after which the actual song starts. It is very difficult to spot any differences in this section. At around 3 minutes, the outro starts. These three sections are clearly distinguished.
+For *One More Light*, the visible parts of the song are more difficult to distinguish. Most of the song is sung in G#, with some deviations to F and C# pitches. The outro clearly starts at 4 minutes.
+
+### The structure of early songs follows clear patterns
 ```{r echo=FALSE}
 # In the end 60a0Rd6pjrkxjPbaKzXjfq
 # One more light 3xXBsjrbG1xQIm1xv1cKOt
@@ -242,44 +243,29 @@ mix_plot_2 <- bind_rows(
   theme_classic() +
   labs(x = "", y = "")
 
-subplot(mix_plot_1, mix_plot_2, nrows = 2, margin = 0.08) %>%
-  layout(annotations = list( 
-    list(
-      x = 0.1,
-      y = 1,
-      text = "In the End",  
-      xref = "paper",  
-      yref = "paper",  
-      xanchor = "center",  
-      yanchor = "bottom",  
-      showarrow = FALSE 
-    ),  
-    list( 
-      x = 0.1,  
-      y = 0.42,
-      text = "One More Light",  
-      xref = "paper",  
-      yref = "paper",  
-      xanchor = "center",  
-      yanchor = "bottom",  
-      showarrow = FALSE 
-  )))
-#ggplotly(mix_plot_1)
-#ggplotly(mix_plot_2)
+ggplotly(mix_plot_1)
 
 ```
 
 ***
-This plot shows the self-similarity matrices of *In the End* and *One More Light*, and it tells us an important difference between old and new songs. As could be seen in the chromagrams on the previous tab, *In the End* starts off with a D#, F, F# and A#. These are almost nowhere to be seen in the rest of the song, so it is only similar to itself. The song then goes on to play some different notes that persist for almost the whole song, with C# being the most pronounced. 
-The timbre self-similarity matrix tells an equally interesting story. The instrumentals in the beginning are definitely unique. That is because they are mixed in with electric/static noises. If they would not have been, they would have been similar to the instrumentals in the outro. The matrix shows the layout of the song very well. At around 20 seconds, Mike Shinoda starts rapping. This is something he also does at around 80 seconds, which is why the self-similarity matrix shows a connection between these two time points. Chester Bennington sings the chrous three times, with the third time being led by a bridge. The three areas are very visible in the matrix. Half of the bridge is sung in a calm way that is unique to any other moment in the song. The other half of the bridge sounds a lot like the chorus, which is why the square that starts at 150 seconds is so much larger than the other two.
+On this and the next tab, we will compare the self-similarity matrices of *In the End* and *One More Light*. These matrices tell us an important difference between old and new songs.
 
-*One More Light* is sung in a very different way. A lot of the song is sung in the G# key, as can be seen in the chromagram on the previous tab. This is mixed in with a bit of the F key and some of the C# chroma.
+As could be seen in the chromagrams on the previous tab, *In the End* starts off with a D#, F, F# and A#. These are almost nowhere to be seen in the rest of the song, so it is only similar to itself. The song then goes on to play some different notes that persist for almost the whole song, with C# being the most pronounced. 
+The timbre self-similarity matrix tells an equally interesting story. The instrumentals in the beginning are definitely unique. That is because they are mixed in with electric/static noises. If they would not have been, they would have been similar to the instrumentals in the outro. The matrix shows the layout of the song very well. At around 20 seconds, Mike Shinoda starts rapping. This is something he also does at around 80 seconds, which is why the self-similarity matrix shows a connection between these two time points. Chester Bennington sings the chorus three times, with the third time being led by a bridge. The three areas are very visible in the matrix. Half of the bridge is sung in a calm way that is unique to any other moment in the song. The other half of the bridge sounds a lot like the chorus, which is why the square that starts at 150 seconds is so much larger than the other two.
+
+### Older and newer songs have similar structures, but very different execution
+```{r echo=FALSE}
+ggplotly(mix_plot_2)
+```
+
+***
+When comparing *In the End* to *One More Light*, we see the songs are sung in a very different way. For *One more Light*, a lot of the song is sung in the G# key, as can be seen earlier shown chromagram. This is mixed in with a bit of the F key and some of the C# chroma.
 The repetition of these three chromas (mainly the G# key) makes for the pattern we see in the self-similarity matrix. The dark square we see at 70 seconds is the first repetition of the chorus. The chromagram does not clearly show when the chorus repeats though, for this we need to look at the timbre matrix. This clearly shows the chorus is song again at around 150 seconds and then a final time at 210 seconds.
 At around 3 minutes in we see a dark blue square that is not similar to anything in the song, except a bit to the intro. This is a relaxed instrumental bridge. It is similar to the intro because the this also only contained instrumental music. The two yellow lines visible at 125 and 135 seconds are long pauses between two sentences, where there is almost no sound at all. These are not similar to any other points in the song.
 
 So while both *In the End* and *One More Light* clearly show verses and choruses being similar, the chromagram shows that *One More Light* alternates a lot more between chromas than *In the End*, which looks like a much more linear song. The timbre matrices show that both songs have unique points next to repetition. In *One More Light* these are slow instrumental pieces, or moments of complete silence. In *In the End* this was a bridge where there was a moment of less intense singing, which then transitioned into the last repetition of the chorus.
 
-### Chordogram
+### Songs in newer albums show clear patterns for the used chords
 ```{r, echo=FALSE}
 circshift <- function(v, n) {
   if (n == 0) v else c(tail(v, n), head(v, -n))
@@ -361,9 +347,9 @@ ggplotly(chordogram)
 ```
 
 ***
-This plot shows the chordogram of *One More Light*. One of the most obvious visible things is the repeating pattern that starts in Ab major, then lowers to Ab7 en drops down to Db major. This is indeed the audible pattern in the song. It starts all the way at the beginning already as the melody then starts, with heavy reverb. 
+This plot shows the chordogram of *One More Light*. One of the most obviously visible things is the repeating pattern that starts in Ab major, then lowers to Ab7 en drops down to Db major. This is indeed the audible pattern in the song. It starts all the way at the beginning already as the melody then starts, with heavy reverb. Such a downward loop makes for an emotionally sounding song that feels kind of sad and like it's in a negative, downward spiral. This makes a lot of sense considering Chester Benningtons state of life when he sung the song. A few months after the song had been released, Chester decided to end it all.
 
-### Novelty of older albums
+### Older songs incorporate a lot of novelty to keep listeners engaged
 ```{r, echo = FALSE}
 ite_data <-
   get_tidy_audio_analysis("60a0Rd6pjrkxjPbaKzXjfq") %>%
@@ -415,7 +401,7 @@ In the figure we can see three different types of novelty graphs for the song *I
 This verse following the chorus starts with a line split in terms of tones. '*I've put my trust*', '*in you..*' where the second part is sung in a much lower voice. This is why we see such a huge spike in the pitch-based novelty graph at this same time stamp (134 seconds).
 The largest spike we see for the timbre-based novelty graph is at 21 seconds. This is completely logical, as the intro was played on a piano with electric static noises in it, and at 21 seconds the drums and flute-like instrument kick in. 
 
-### Tempogram
+### Older songs have very well-defined BPM's
 ```{r echo=FALSE}
 ite_data <- get_tidy_audio_analysis("60a0Rd6pjrkxjPbaKzXjfq")
 
@@ -432,7 +418,3 @@ ggplotly(ite_tempogram)
 
 For the track *In the End* we can see the BPM of the whole song pretty clearly. Most of the line stays on 105 BPM, with some small exceptions. We deviate from the line at 70 seconds, 130 seconds and with the outro. Looking at the loudness novelty graph, we see that the novelty is at a lowpoint. This makes it so that the algorithm cannot find enough new points to figure out what the BPM really is. With 130 seconds, it is the other way around. The loudness novelty graph is peaking heavily. This is because the music goes from a heavy chorus into a more relaxed break. It does this using a small window with barely any music at all. This makes it so that the algorithm is getting confused as to which parts of the song it should look for to determine the BPM. 
 Finally, in the outro, the music slows down which is very visible in the loudness and timbre based novelty graphs. Now the algorithm lacks data points to determine the BPM again.
-<!---
-Comparisons with reviewers, 
-Style of albums (loudness, dancability, ...)
--->
