@@ -16,6 +16,11 @@ library(tidyverse)
 library(plotly)
 library(flexdashboard)
 library(compmus)
+library(ape)
+library(tidymodels)
+library(ggdendro)
+library(heatmaply)
+
 all_lp_tracks <- get_playlist_audio_features("", "1y9QYGfYFzSO7EF53wwLiB")
 ```
 
@@ -418,3 +423,72 @@ ggplotly(ite_tempogram)
 
 For the track *In the End* we can see the BPM of the whole song pretty clearly. Most of the line stays on 105 BPM, with some small exceptions. We deviate from the line at 70 seconds, 130 seconds and with the outro. Looking at the loudness novelty graph, we see that the novelty is at a lowpoint. This makes it so that the algorithm cannot find enough new points to figure out what the BPM really is. With 130 seconds, it is the other way around. The loudness novelty graph is peaking heavily. This is because the music goes from a heavy chorus into a more relaxed break. It does this using a small window with barely any music at all. This makes it so that the algorithm is getting confused as to which parts of the song it should look for to determine the BPM. 
 Finally, in the outro, the music slows down which is very visible in the loudness and timbre based novelty graphs. Now the algorithm lacks data points to determine the BPM again.
+
+### The difference in tracks over two albums is clearly visible
+```{R echo=FALSE}
+all_tracks <-
+  get_playlist_audio_features("bnfcollection", "2WAcLeFOdEps0dOIFpe0Dy") %>%
+  add_audio_analysis() %>%
+  mutate(
+    segments = map2(segments, key, compmus_c_transpose),
+    pitches =
+      map(segments,
+        compmus_summarise, pitches,
+        method = "mean", norm = "manhattan"
+      ),
+    timbre =
+      map(
+        segments,
+        compmus_summarise, timbre,
+        method = "mean"
+      )
+  ) %>%
+  mutate(pitches = map(pitches, compmus_normalise, "clr")) %>%
+  mutate_at(vars(pitches, timbre), map, bind_rows) %>%
+  unnest(cols = c(pitches, timbre))
+```
+
+```{r echo=FALSE}
+all_tracks_juice <-
+  recipe(
+    track.name ~
+      danceability +
+      energy +
+      loudness +
+      speechiness +
+      acousticness +
+      instrumentalness +
+      liveness +
+      valence +
+      tempo +
+      duration +
+      C + `C#|Db` + D + `D#|Eb` +
+      E + `F` + `F#|Gb` + G +
+      `G#|Ab` + A + `A#|Bb` + B +
+      c01 + c02 + c03 + c04 + c05 + c06 +
+      c07 + c08 + c09 + c10 + c11 + c12,
+    data = all_tracks
+  ) %>%
+  step_center(all_predictors()) %>%
+  step_scale(all_predictors()) %>% 
+  # step_range(all_predictors()) %>% 
+  prep(all_tracks %>% mutate(track.name = str_trunc(track.name, 20))) %>%
+  juice() %>%
+  column_to_rownames("track.name")
+all_tracks_dist <- dist(all_tracks_juice, method = "euclidean")
+
+```
+
+```{r echo=FALSE}
+ddata <- all_tracks_dist %>% 
+  hclust(method = "complete")
+
+colors = c("red", "blue")
+clus4 = cutree(ddata, 4)
+album <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
+plot(as.phylo(ddata), type = "fan", tip.color = colors[album],
+     label.offset = 0.3, cex = 0.8)
+```
+
+***
+In this fan-shaped dendrogram we can see how clusters the newer album *One More Light* (shown in blue) compares to the older album *Hybrid Theory* (shown in red). We see that there are a few outliers, but it's easy to spot the heavy cluster forming. Good Goodbye seems to be very similar to the older songs and less to the newer songs. This may be because this is a collaboration song with Stormzy and Pusha T. They add a lot of rapping to the songs, making it more like one of the songs in the older albums. The songs *One More Light* and *Cure for the Itch* seem to be relatively unrelated to any other songs in either album. This is not what I expected, as *One More Light* is a very defining song for the album (which is the reason the album is named after it) and to me songs like *Heavy* and *Halfway Right* sound a lot like it. Another observation I do not have an explanation for would be the two clusters within *Hybrid Theory*, some in the bottom of the graph and some in the top.
