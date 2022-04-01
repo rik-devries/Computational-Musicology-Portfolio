@@ -1,13 +1,18 @@
 ---
-title: "Portfolio"
+title: "Linkin Park Album Analysis"
 author: "Rik de Vries"
-date: "2/19/2022"
+date: "February/March 2022"
 output: 
   flexdashboard::flex_dashboard:
     storyboard: true
     self_contained: false
     vertical_layout: fill
 ---
+<style>
+.sbframe-commentary {
+  width: 400px;
+}
+</style>
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -194,7 +199,8 @@ mix_plot_1 <-bind_rows(
       width = xduration,
       y = ystart + yduration / 2,
       height = yduration,
-      fill = d
+      fill = d, 
+      text=sprintf("X-time: %.0f seconds<br>Y-time: %.0f seconds<br>Delta: %.4f", xstart + xduration / 2, ystart + yduration / 2, d)
     )
   ) +
   geom_tile() +
@@ -238,7 +244,8 @@ mix_plot_2 <- bind_rows(
       width = xduration,
       y = ystart + yduration / 2,
       height = yduration,
-      fill = d
+      fill = d, 
+      text=sprintf("X-time: %.0f seconds<br>Y-time: %.0f seconds<br>Delta: %.4f", xstart + xduration / 2, ystart + yduration / 2, d)
     )
   ) +
   geom_tile() +
@@ -248,19 +255,19 @@ mix_plot_2 <- bind_rows(
   theme_classic() +
   labs(x = "", y = "")
 
-ggplotly(mix_plot_1)
+ggplotly(mix_plot_1, tooltip=c("text"))
 
 ```
 
 ***
-On this and the next tab, we will compare the self-similarity matrices of *In the End* and *One More Light*. These matrices tell us an important difference between old and new songs.
+On this and the next tab, we will compare the self-similarity matrices of *In the End* and *One More Light*. These matrices tell us an important difference between old and new songs. This tab starts off with the self-similarity matrices for *In the End*.
 
 As could be seen in the chromagrams on the previous tab, *In the End* starts off with a D#, F, F# and A#. These are almost nowhere to be seen in the rest of the song, so it is only similar to itself. The song then goes on to play some different notes that persist for almost the whole song, with C# being the most pronounced. 
 The timbre self-similarity matrix tells an equally interesting story. The instrumentals in the beginning are definitely unique. That is because they are mixed in with electric/static noises. If they would not have been, they would have been similar to the instrumentals in the outro. The matrix shows the layout of the song very well. At around 20 seconds, Mike Shinoda starts rapping. This is something he also does at around 80 seconds, which is why the self-similarity matrix shows a connection between these two time points. Chester Bennington sings the chorus three times, with the third time being led by a bridge. The three areas are very visible in the matrix. Half of the bridge is sung in a calm way that is unique to any other moment in the song. The other half of the bridge sounds a lot like the chorus, which is why the square that starts at 150 seconds is so much larger than the other two.
 
 ### Older and newer songs have similar structures, but very different execution
 ```{r echo=FALSE}
-ggplotly(mix_plot_2)
+ggplotly(mix_plot_2, tooltip=c("text"))
 ```
 
 ***
@@ -341,14 +348,14 @@ chordogram <- get_tidy_audio_analysis("3xXBsjrbG1xQIm1xv1cKOt") %>%
   ) %>% 
   compmus_match_pitch_template(chord_templates, "euclidean", "manhattan") %>%
   ggplot(
-    aes(x = start + duration / 2, width = duration, y = name, fill = d)
+    aes(x = start + duration / 2, width = duration, y = name, fill = d, text=sprintf("Time: %.0f seconds<br>Chord: %s<br>Delta: %.4f", start + duration / 2, name, d))
   ) +
   geom_tile() +
   scale_fill_viridis_c(guide = "none") +
   theme_minimal() +
-  labs(x = "Time (s)", y = "")
+  labs(x = "Time (s)", y = "", title="Chordogram: One More Light")
 
-ggplotly(chordogram)
+ggplotly(chordogram, tooltip="text")
 ```
 
 ***
@@ -366,45 +373,34 @@ ite_loudness <- ite_data %>%
   mutate(loudness_max_time = start + loudness_max_time) %>%
   arrange(loudness_max_time) %>%
   mutate(delta_loudness = loudness_max - lag(loudness_max)) %>%
-  ggplot(aes(x = loudness_max_time, y = pmax(0, delta_loudness))) +
-  geom_line() +
-#  xlim(0, 30) +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Novelty", title = "Loudness-based novelty function")
-ite_pitches <- ite_data %>%
-  mutate(pitches = map(pitches, compmus_normalise, "clr")) %>%
-  arrange(start) %>%
-  mutate(pitches = map2(pitches, lag(pitches), `-`)) %>%
-  slice(-1) %>% 
-  compmus_gather_chroma() %>% 
-  group_by(start, duration) %>% 
-  summarise(novelty = sum(log1p(pmax(value, 0)))) %>% 
-  ggplot(aes(x = start + duration / 2, y = novelty)) +
-  geom_line() +
-#  xlim(0, 30) +
-  theme_minimal() +
-  labs(x = "Time (s)", y = "Novelty", title = "Pitch-based novelty function")
-ite_timbre <- ite_data %>%
-  arrange(start) %>%
-  mutate(timbre = map2(timbre, lag(timbre), `-`)) %>%
-  slice(-1) %>%
-  compmus_gather_timbre() %>%
-  group_by(start, duration) %>% 
-  summarise(novelty = sum(log1p(pmax(value, 0)))) %>% 
-  ggplot(aes(x = start + duration / 2, y = novelty)) +
+  ggplot(aes(x = loudness_max_time, y = pmax(0, delta_loudness), text=sprintf("Time: %.0f seconds<br>Novelty: %.4f", loudness_max_time / 2, 0.1))) +
   geom_line() +
 #  xlim(0, 30) +
   theme_minimal() +
   labs(x = "Time (s)", y = "Novelty")
 
-subplot(ite_loudness, ite_pitches, ite_timbre) %>%
-  layout(title = 'Loudness, pitch and timbre-based novelty graphs')
+ggly <- ggplotly(ite_loudness)
+
+text_x <- number(
+  ggly$x$data[[1]]$x,
+  prefix = "Time: ",
+  suffix = " seconds",
+  accuracy = 1
+)
+
+text_y <- number(
+  ggly$x$data[[1]]$y,
+  accuracy = 0.0001,
+  prefix = "Novelty: ",
+)
+
+ggplotly(ite_loudness, tooltip="text") %>%
+  style(text = paste0(text_x, "<br>", text_y), traces = 1) %>%
+  layout(title = 'Loudness-based novelty graph: In the End')
 
 ```
 ***
-In the figure we can see three different types of novelty graphs for the song *In the End*. We have the loudness, pitch and timbre based novelty graphs. The loudness based graph has a huge peak at the start which makes sense, as we then go from no music at all to the start of the song. We see many logical spikes, such as at 18 seconds when the song moves from the intro to the first verse or the spike when we go from the chorus to another verse at 130 seconds. 
-This verse following the chorus starts with a line split in terms of tones. '*I've put my trust*', '*in you..*' where the second part is sung in a much lower voice. This is why we see such a huge spike in the pitch-based novelty graph at this same time stamp (134 seconds).
-The largest spike we see for the timbre-based novelty graph is at 21 seconds. This is completely logical, as the intro was played on a piano with electric static noises in it, and at 21 seconds the drums and flute-like instrument kick in. 
+In the figure we can see loudness-based novelty graph for the song *In the End*. The graph has a huge peak at the start which makes sense, as we then go from no music at all to the start of the song. We see many logical spikes, such as at 18 seconds when the song moves from the intro to the first verse or the spike at 75 seconds when we enter the second verse. The chorus seems to be characterized by low loudness novelty: one starts at 55 seconds, the next at 100 seconds and the final time at 165 seconds. The spike at 130 seconds is when we enter the second verse from the chorus and at 190 seconds we enter the outro, played by a piano. 
 
 ### Older songs have very well-defined BPM's
 ```{r echo=FALSE}
@@ -412,12 +408,12 @@ ite_data <- get_tidy_audio_analysis("60a0Rd6pjrkxjPbaKzXjfq")
 
 ite_tempogram <- ite_data %>%
   tempogram(window_size = 8, hop_size = 1, cyclic = TRUE) %>%
-  ggplot(aes(x = time, y = bpm, fill = power)) +
+  ggplot(aes(x = time, y = bpm, fill = power, text=sprintf("Time: %.0f seconds<br>BPM: %s<br>Power: %.4f", time, bpm, power))) +
   geom_raster() +
   scale_fill_viridis_c(guide = "none") +
-  labs(x = "Time (s)", y = "Tempo (BPM)") +
+  labs(x = "Time (s)", y = "Tempo (BPM)", title="Tempogram: In the End") +
   theme_classic()
-ggplotly(ite_tempogram)
+ggplotly(ite_tempogram, tooltip="text")
 ```
 ***
 
@@ -457,16 +453,8 @@ all_tracks_juice <-
       loudness +
       speechiness +
       acousticness +
-      instrumentalness +
-      liveness +
       valence +
-      tempo +
-      duration +
-      C + `C#|Db` + D + `D#|Eb` +
-      E + `F` + `F#|Gb` + G +
-      `G#|Ab` + A + `A#|Bb` + B +
-      c01 + c02 + c03 + c04 + c05 + c06 +
-      c07 + c08 + c09 + c10 + c11 + c12,
+      tempo,
     data = all_tracks
   ) %>%
   step_center(all_predictors()) %>%
@@ -486,9 +474,32 @@ ddata <- all_tracks_dist %>%
 colors = c("red", "blue")
 clus4 = cutree(ddata, 4)
 album <- c(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2)
-plot(as.phylo(ddata), type = "fan", tip.color = colors[album],
+plot(as.phylo(ddata), tip.color = colors[album],
      label.offset = 0.3, cex = 0.8)
 ```
 
 ***
-In this fan-shaped dendrogram we can see how clusters the newer album *One More Light* (shown in blue) compares to the older album *Hybrid Theory* (shown in red). We see that there are a few outliers, but it's easy to spot the heavy cluster forming. Good Goodbye seems to be very similar to the older songs and less to the newer songs. This may be because this is a collaboration song with Stormzy and Pusha T. They add a lot of rapping to the songs, making it more like one of the songs in the older albums. The songs *One More Light* and *Cure for the Itch* seem to be relatively unrelated to any other songs in either album. This is not what I expected, as *One More Light* is a very defining song for the album (which is the reason the album is named after it) and to me songs like *Heavy* and *Halfway Right* sound a lot like it. Another observation I do not have an explanation for would be the two clusters within *Hybrid Theory*, some in the bottom of the graph and some in the top.
+In this dendrogram we can see how clusters of the newer album *One More Light* (shown in blue) are formed next to the older album *Hybrid Theory* (shown in red). 
+The dendrogram is based on 7 track-level features:
+
+* Danceability
+* Energy
+* Loudness
+* Speechiness
+* Acousticness
+* Valence
+* Tempo
+
+We see that there are a few outliers, but it's easy to spot the heavy cluster forming. *Crawling* seems to be misgrouped with the rest of the songs of the *One More Light* album and on the other hand, *Invisible* seems to be grouped in the *Hybrid Theory* album. How *Invisible* gets into *Hybrid Theory* is something I do not completely understand. *Invisible* has a lot less energy and loudness compared to other songs, especially *One Step Closer* to which it is most similar according to the clustering algorithm. The valence, tempo and speechiness do sound rather similar to me, so this is my best guess as to why these two songs are clustered together. The exact same also goes for *Crawling* and *Sorry for Now*. These are clearly nu metal and pop songs respectively, but their valence, tempo and speechiness does sound similar to my ear.
+
+Outside of the two large clusters, there are three outlier tracks that don't quite fit in. These are *Cure for the Itch*, *With You* and *One More Light*. The most striking to me is *One More Light*. The album is named after this song for a reason, it is definitely the defining track for the album. What makes it so that this song does not fit in with the rest, I do not know.
+
+### Conclusion
+
+All in all, we see that the older music of Linkin Park does indeed differ a lot from the newer music. Even though the newer albums and older albums are equally popular, the newer ones they have more well-defined chroma's, different musical structures and show a clearly downward spiral for their chords, which corresponds to the low point in the lead singer, Chester Bennington's life. These differences are so clearly visible that even a clustering algorithm could distinguish the old from the new albums with a decent accuracy.  
+
+The Spotify API was very useful when researching this corpus as even with my very limited musical background, I was able to gain insights into many aspects of the corpus that were not clear beforehand.
+
+***
+<iframe src="https://open.spotify.com/embed/playlist/7MATpbz5p1afYISxOgY7ek?utm_source=generator" width="100%" height="99%" frameBorder="0" allowfullscreen="" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+
